@@ -18,7 +18,7 @@
    ])
 
 (def mBoard (createBoard))
-(def empty 0)
+(def notSet 0)
 
 (defn getBoard []
   mBoard
@@ -64,14 +64,51 @@
         (if (= 0 (count (filter #(> 1 %) cell)))
           true false)))))
 
+(defn removeBlanks [vect]
+  "Returns a vector without blanks"
+  (filter #(> 1 %) vect))
 
 
-(defn createValidSell [])
+(defn getRow [rix board]
+  "Returns the row at rownum. Zero indexed"
+  (let [[cell1 cell2 cell3] [(getCell rix 0 board) (getCell rix 1 board) (getCell rix 2 board)]]
+    (vector (nth cell1 0)(nth cell1 1)(nth cell1 2)
+            (nth cell2 0)(nth cell1 2)(nth cell2 2)
+            (nth cell3 0)(nth cell3 1)(nth cell3 2))))
 
-(defn dups [coll]
-  "Return duplicates in collection"
-  (let [freqs (frequencies coll)]
-    (filter #(< 1 (freqs %)) coll)))
+(defn isRowValid? [rix board]
+  "Returns true if row contains no duplicates"
+  (let [row (removeBlanks (getRow rix board))]
+    (= (count row) (count (set row)))
+    ))
+
+(defn getColumn [colix board]
+  "Returns the col at colnum. Zero indexed"
+  (let [cell1 (getCell 0 colix board)
+        cell2 (getCell 1 colix board)
+        cell3 (getCell 2 colix board)]
+    (vector (nth cell1 0)(nth cell1 1)(nth cell1 2)
+            (nth cell2 0)(nth cell1 2)(nth cell2 2)
+            (nth cell3 0)(nth cell3 1)(nth cell3 2))))
+
+(defn isColumnValid? [colnum board]
+  "returns true if column contains no duplicates"
+ ; (let )
+  true)
+
+
+(defn createCompleteCell []
+  "Fill cell with random values"
+  ;vector with all digs
+  (let [store [1 2 3 4 5 6 7 8 9]
+        cell []
+        dig (rand-int (count store ))]
+    (println (conj (conj cell dig) (rand-int (count store ))))
+
+      ;(println cell)
+    ))
+(createCompleteCell)
+
 
 (macroexpand `#(< 1 (freqs %)))
 (getBoard)
