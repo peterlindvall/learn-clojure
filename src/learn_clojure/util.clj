@@ -5,7 +5,7 @@
   [coll elm]
   (some #(= elm %) coll))
 
-(defn dups [coll]
+(defn getDups [coll]
   "Return duplicates in collection"
   (let [freqs (frequencies coll)]
     (filter #(< 1 (freqs %)) coll)))
