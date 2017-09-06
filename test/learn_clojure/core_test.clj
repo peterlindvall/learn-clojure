@@ -16,15 +16,15 @@
 
 
 (deftest isCellComplete-test
-  (let [board [[1 2 3 4 5 6 7 8 9] ;r0 c0 (correct)
-              [1 2 3 4 5 6 7 8 ] ;r0 c1 (value missing)
-              [1 2 0 4 5 6 7 8 9] ;r0 c2 (invalid value, to small)
-              [1 2 3 4 5 6 7 8 10] ;r1 c0 (invalid value, to large)
-              [2 2 3 4 5 6 7 8 9] ;r1 c1 (has duplicate value)
-              [1 2 3 4 5 6 7 8 9 10] ;r1 c2 (too many values)
-              [1 2 3 4 5 6 7 8 9] ;r2 c0
-              [3 2 3 4 5 6 7 8 9] ;r2 c1
-              [3 3 3 4 5 6 7 8 9]]] ;r2 c2
+  (let [board [[1 2 3 4 5 6 7 8 9]                          ;r0 c0 (correct)
+               [1 2 3 4 5 6 7 8]                            ;r0 c1 (value missing)
+               [1 2 0 4 5 6 7 8 9]                          ;r0 c2 (invalid value, to small)
+               [1 2 3 4 5 6 7 8 10]                         ;r1 c0 (invalid value, to large)
+               [2 2 3 4 5 6 7 8 9]                          ;r1 c1 (has duplicate value)
+               [1 2 3 4 5 6 7 8 9 10]                       ;r1 c2 (too many values)
+               [1 2 3 4 5 6 7 8 9]                          ;r2 c0
+               [3 2 3 4 5 6 7 8 9]                          ;r2 c1
+               [3 3 3 4 5 6 7 8 9]]]                        ;r2 c2
 
     (is (isCellComplete? (nth board 0)))
     (is (not (isCellComplete? (nth board 1))))
@@ -34,12 +34,12 @@
     (is (not (isCellComplete? (nth board 5))))))
 
 (deftest getCell-test
-  (let [board [[1 2 3 4 5 6 7 8 9] ;r0 c0
-               [1 2 3 4 5 6 7 8 ] ;r0 c1
-               [1 2 0 4 5 6 7 8 9] ;r0 c2
-               [1 2 3 4 5 6 7 8 10] ;r1 c0
-               [2 2 3 4 5 6 7 8 9] ;r1 c1
-               [3 3 3 4 5 6 7 8 9]]] ;r1 c2
+  (let [board [[1 2 3 4 5 6 7 8 9]                          ;r0 c0
+               [1 2 3 4 5 6 7 8]                            ;r0 c1
+               [1 2 0 4 5 6 7 8 9]                          ;r0 c2
+               [1 2 3 4 5 6 7 8 10]                         ;r1 c0
+               [2 2 3 4 5 6 7 8 9]                          ;r1 c1
+               [3 3 3 4 5 6 7 8 9]]]                        ;r1 c2
 
     (is (= (getCell 0 0 board) [1 2 3 4 5 6 7 8 9]))
     (is (= (getCell 1 1 board) [2 2 3 4 5 6 7 8 9]))
@@ -47,7 +47,7 @@
     ))
 
 (deftest getCell-test
-  (let [cell00 [ 1  2  3  4  5  6  7  8  9]
+  (let [cell00 [1 2 3 4 5 6 7 8 9]
         cell01 [11 12 13 14 15 16 17 18 19]
         cell02 [21 22 23 24 25 26 27 28 29]
         cell10 [31 32 33 34 35 36 37 38 39]
@@ -60,14 +60,14 @@
                cell10 cell11 cell12
                cell20 cell21 cell22]]
     (is (= (getCell 0 0 board) cell00))
-    (is (= (getCell 1 1 board) cell11))
+    (is (= (getCell 0 1 board) cell01))
     (is (= (getCell 1 2 board) cell12))
     (is (= (getCell 2 2 board) cell22))
     ))
 
 
 (deftest getRow-test
-  (let [board [[ 1  2  3  4  5  6  7  8  9]
+  (let [board [[1 2 3 4 5 6 7 8 9]
                [11 12 13 14 15 16 17 18 19]
                [21 22 23 24 25 26 27 28 29]
                [31 32 33 34 35 36 37 38 39]
@@ -81,20 +81,16 @@
     (is (= (getRow 8 board) [67 68 69 77 78 79 87 88 89]))
     ))
 
-(deftest getColumn-test
-  (let [board [[ 1  2  3  4  5  6  7  8  9]
-               [11 12 13 14 15 16 17 18 19]
-               [21 22 23 24 25 26 27 28 29]
-               [31 32 33 34 35 36 37 38 39]
-               [41 42 43 44 45 46 47 48 49]
-               [51 52 53 54 55 56 57 58 59]
-               [61 62 63 64 65 66 67 68 69]
-               [71 72 73 74 75 76 77 78 79]
-               [81 82 83 84 85 86 87 88 89]]
-        col (getColumn 0 board)]
-    (is (= col [1 4 7 31 34 37 61 64 67]))
-    )
-  )
+(deftest getColumn-test2
+  (let [board solvedBoard
+        col1 (getColumn 0 board)
+        col4 (getColumn 3 board)
+        col9 (getColumn 8 board)]
+    (printBoard board)
+    (is (= col1 [5 6 1 8 4 7 9 2 3]))
+    (is (= col4 [6 1 3 7 8 9 5 4 2]))
+    (is (= col9 [2 8 7 3 1 6 4 5 9]))
+    ))
 
 (deftest isColumnValid?-test
   (let [validBoard solvedBoard
@@ -109,7 +105,7 @@
                       [9 8 4 6 3 5 1 7 2]]
         ;col (getColumn 3 invalidBoard)
         ]
-    ;(println "Inalid column? " col " #" (count col))
+    ;(println "Invalid column? " col " #" (count col))
     (is (isColumnValid? 0 validBoard))
     (is (isColumnValid? 2 validBoard))
     (is (isColumnValid? 3 validBoard))
