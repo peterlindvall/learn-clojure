@@ -93,36 +93,15 @@
   (nth board (+ (* r 3) c)))
 
 
-(defn isValidCellVerbose? [cell]
-  "Is cell valid; 9 entries w/ values 1-9, no duplicates"
-  (let [values (count cell)]
-    (println values " values"))
-  (let [uniqueVals (count (set cell))]
-    (println uniqueVals " unique values"))
-  (let [tooBig (count (filter #(< 9 %) cell))]
-    (println tooBig " too big values"))
-  (let [tooSmall (count (filter #(> 1 %) cell))]
-    (println tooSmall " too small values"))
-  )
-
 (defn isCellComplete? [cell]
-  "Return true if cell contains 9 unique values between "
+  "Return true if cell contains 9 unique values between 1..9"
   (if (and (= 9 (count cell)) (= 9 (count (set cell))))
     (if (every? (fn [x] (and (< x 10) (> x 0))) cell)
       true false)))
 
-(defn isCellValid? [cell gridSize]
-  "Return true if cell does not contain duplicate values"
-  (if (>= gridSize (count cell))
-    (if (= gridSize (count (set cell)))
-      (if (= 0 (count (filter #(< gridSize %) cell)))
-        (if (= 0 (count (filter #(> 1 %) cell)))
-          true false)))))
-
 (defn removeBlanks [vect]
   "Returns a vector without blanks"
   (filter #(< 0 %) vect))
-
 
 (defn getRow [rix board]
   "Returns the row at rownum. Zero indexed"
@@ -141,6 +120,12 @@
   (let [row (removeBlanks (getRow rix board))]
     (= (count row) (count (set row)))
     ))
+
+(defn isCellValid? [cell]
+  "Return true if cell does not contain duplicate values"
+  (let [cellValues (removeBlanks cell)]
+    (= (count cellValues) (count (set cellValues)))))
+
 
 (defn getValue [r c]
   (let [board (@state-atom :board)

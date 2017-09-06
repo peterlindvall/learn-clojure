@@ -145,3 +145,14 @@
     (is (= vectorWithoutZeroes [1 2 3 4 5]))
     )
   )
+
+(deftest isCellValid?-test
+  (let [cell1 [3 2 1 4 5 6 8 7 9]                           ;valid
+        cell2 [0 1 0 7 3 0 5 2 8]                           ;valid
+        cell3 []                                            ;valid
+        cell4 [0 1 2 0 4 1]]                                ;invalid, duplicate values
+    (is (isCellValid? cell1))
+    (is (isCellValid? cell2))
+    (is (isCellValid? cell3))
+    (is (not (isCellValid? cell4)))))
+
