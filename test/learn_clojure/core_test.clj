@@ -100,12 +100,12 @@
                       [8 5 9 4 2 6 7 1 3]
                       [7 6 1 8 5 3 2 9 4]
                       [4 2 3 7 9 1 8 5 6]
-                      [9 5 1 2 8 7 4 3 6]
+                      [9 5 1 0 8 7 4 3 6]
                       [5 3 4 7 1 9 2 8 6]
                       [9 8 4 6 3 5 1 7 2]]
-        ;col (getColumn 3 invalidBoard)
         ]
-    ;(println "Invalid column? " col " #" (count col))
+    ;(println "Invalid board")
+    ;(printBoard invalidBoard)
     (is (isColumnValid? 0 validBoard))
     (is (isColumnValid? 2 validBoard))
     (is (isColumnValid? 3 validBoard))
@@ -128,7 +128,7 @@
                       [9 5 1 2 8 7 4 8 6]
                       [5 3 4 7 1 9 2 8 6]
                       [9 8 4 6 3 5 1 7 2]]]
-    (println (getRow 5 invalidBoard))
+    ;(println (getRow 5 invalidBoard))
     (is (isRowValid? 0 validBoard))
     (is (isRowValid? 2 validBoard))
     (is (isRowValid? 5 validBoard))

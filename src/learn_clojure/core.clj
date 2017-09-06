@@ -3,7 +3,7 @@
 
 ;Data structures
 (comment
-    c0 c1 c2 c3 c4 c5 c6 c7 c8
+  c0 c1 c2 c3 c4 c5 c6 c7 c8
   -----------------------------
   r0 .......|........|........|
   r1 cell00 | cell01 | cell02 |
@@ -18,7 +18,7 @@
   r8........|........|........|
   -----------------------------
 
-    Note! A vector in the board datastructure represents a cell, not a row on the board
+  Note! A vector in the board datastructure represents a cell, not a row on the board
   )
 
 (defn createBoard []
@@ -106,15 +106,13 @@
   )
 
 (defn isCellComplete? [cell]
-  "Returns tru if cell contain gridSize unique values larger than 0 and not larger than gridsize"
-  (if (= gridSize (count cell))
-    (if (= gridSize (count (set cell)))
-      (if (= 0 (count (filter #(< gridSize %) cell)))
-        (if (= 0 (count (filter #(> 1 %) cell)))
-          true false)))))
+  "Return true if cell contains 9 unique values between "
+  (if (and (= 9 (count cell)) (= 9 (count (set cell))))
+    (if (every? (fn [x] (and (< x 10) (> x 0))) cell)
+      true false)))
 
 (defn isCellValid? [cell gridSize]
-  "does cell contain valid values"
+  "Return true if cell does not contain duplicate values"
   (if (>= gridSize (count cell))
     (if (= gridSize (count (set cell)))
       (if (= 0 (count (filter #(< gridSize %) cell)))
@@ -167,8 +165,6 @@
   (let [col (removeBlanks (getColumn colix board))]
     ;(println col " set: " (set col))
     (= (count col) (count (set col)))))
-
-;(dedupe [1 2 3 4])
 
 (defn createCompleteCell []
   "Fill cell with random values"
