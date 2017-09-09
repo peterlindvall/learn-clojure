@@ -64,8 +64,8 @@
 
 
 ;defonce locks. Not good for debug purposes during development
-(def state-atom (atom {:board        (createInitialState)
-                       :initialized? false
+(def state-atom (atom {:board          (createInitialState)
+                       :initialized?   false
                        :previousBoards []}))
 
 (defn clear-board! []
@@ -146,7 +146,6 @@
     (swap! state-atom assoc :board (board))
     ))
 
-
 (defn get-column [colix board]
   "Returns the col at colnum. Zero indexed"
   ;col 0 1 2 -> cell 00. 10. 20
@@ -183,26 +182,26 @@
 
 (comment
   (reduce
-  (fn [primes number]
-    (if (some zero? (map (partial mod number) primes))
-      primes
-      (conj primes number)))
-  [2]
-  (take 1000 (iterate inc 3)))
+    (fn [primes number]
+      (if (some zero? (map (partial mod number) primes))
+        primes
+        (conj primes number)))
+    [2]
+    (take 1000 (iterate inc 3)))
   )
 
 (comment
-(defn myFirstUseOfReduce [rowix board]
-  (let [row (get-row rowix board)]
-    ;        strRow (clojure.string/join " " row)]
-    (reduce (fn [strRow value]
-              (if (= value 0)
-                (conj strRow "#")
-                (conj strRow (str value))
-                ))
-            []
-            row)))
-)
+  (defn myFirstUseOfReduce [rowix board]
+    (let [row (get-row rowix board)]
+      ;        strRow (clojure.string/join " " row)]
+      (reduce (fn [strRow value]
+                (if (= value 0)
+                  (conj strRow "#")
+                  (conj strRow (str value))
+                  ))
+              []
+              row)))
+  )
 
 (defn get-row-as-string [rix board]
   (let [row (get-row rix board)
@@ -211,23 +210,6 @@
     (clojure.string/replace rowStrWSpace #"." #(str %1 " "))
     )
   )
-
-(defn printBoardOld [board]
-  (let [horBar "-------------------------"]
-    (println horBar)
-    (println (get-row-as-string 0 board))
-    (println (get-row-as-string 1 board))
-    (println (get-row-as-string 2 board))
-    (println horBar)
-    (println (get-row-as-string 3 board))
-    (println (get-row-as-string 4 board))
-    (println (get-row-as-string 5 board))
-    (println horBar)
-    (println (get-row-as-string 6 board))
-    (println (get-row-as-string 7 board))
-    (println (get-row-as-string 8 board))
-    (println horBar)
-    ))
 
 (defn print-board [board]
   (let [horBar "-------------------------"]
@@ -243,17 +225,18 @@
 
 ;(time (printBoard (@state-atom :board)))
 ;(time (printBoard learn-clojure.core-test/solvedBoard))
-;(println (getRowAsString 3 (@state-atom :board)))
 ;(println (getRow 3 (@state-atom :board)))
+;(println (getRowAsString 3 (@state-atom :board)))
 ;(println (clojure.string/replace (clojure.string/join " " (getRow 0 (get-in @state-atom [:board]))) #"0" " "))
 ;(printBoard (get-in @state-atom [:board]))
-
-(comment
-(loop [x 10]
-  (when (> x 1)
-    (println x)
-    (recur (- x 2))))
-)
+#_(defn -main [& args]
+    ;;   "Application entry point"
+    ;;   (comment Do app initialization here))
+    (loop [x 10]
+      (when (> x 1)
+        (println x)
+        (recur (- x 2))))
+    )
 ;(macroexpand `#(< 1 (freqs %)))
 
 ;-------------------------------------
@@ -261,24 +244,20 @@
 
 (def counter (atom 0))
 
-(defn guessing-game []
+(defn -main [& args]
   (let [answer (+ 1 (rand-int 10))]
-    (swap! counter 0)
-    (println @counter " Guess a number between 1 and 10")
-    (flush)
+    (println "Guess a number between 1 and 10")
+    (print "-> ")(flush)
     (loop []
       (swap! counter inc)
-      ;(def guess (Integer/parseInt (re-find #"[0-9]*" (read-line))))
-      (def guess 5)
-      (println @counter " You guessed " guess)
-      (flush)
+      (def guess (Integer/parseInt (re-find #"[0-9]*" (read-line))))
       (if (= guess answer)
-        (println (if (< @counter 4) "You made it in less than four attempts. Bravo!" "Correct!"))
-        (flush))
-      (if (< guess answer) (println "Too small!"))
-      (if (> guess answer) (println "Too big"))
+        (if (< @counter 4)
+          (println "You made it in" @counter "attempts. Bravo!")
+          (println "That is correct!")))
+      (if (< guess answer) (print "That is too small!\n-> "))
+      (if (> guess answer) (print "That is too big!\n-> "))
+      (flush)
       (when (not= guess answer)
         (recur)))))
-
-;(guessing-game)
 
