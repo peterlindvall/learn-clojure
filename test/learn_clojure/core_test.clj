@@ -26,12 +26,12 @@
                [3 2 3 4 5 6 7 8 9]                          ;r2 c1
                [3 3 3 4 5 6 7 8 9]]]                        ;r2 c2
 
-    (is (isCellComplete? (nth board 0)))
-    (is (not (isCellComplete? (nth board 1))))
-    (is (not (isCellComplete? (nth board 2))))
-    (is (not (isCellComplete? (nth board 3))))
-    (is (not (isCellComplete? (nth board 4))))
-    (is (not (isCellComplete? (nth board 5))))))
+    (is (is-cell-complete? (nth board 0)))
+    (is (not (is-cell-complete? (nth board 1))))
+    (is (not (is-cell-complete? (nth board 2))))
+    (is (not (is-cell-complete? (nth board 3))))
+    (is (not (is-cell-complete? (nth board 4))))
+    (is (not (is-cell-complete? (nth board 5))))))
 
 (deftest getCell-test
   (let [board [[1 2 3 4 5 6 7 8 9]                          ;r0 c0
@@ -41,9 +41,9 @@
                [2 2 3 4 5 6 7 8 9]                          ;r1 c1
                [3 3 3 4 5 6 7 8 9]]]                        ;r1 c2
 
-    (is (= (getCell 0 0 board) [1 2 3 4 5 6 7 8 9]))
-    (is (= (getCell 1 1 board) [2 2 3 4 5 6 7 8 9]))
-    (is (= (getCell 1 2 board) [3 3 3 4 5 6 7 8 9]))
+    (is (= (get-cell 0 0 board) [1 2 3 4 5 6 7 8 9]))
+    (is (= (get-cell 1 1 board) [2 2 3 4 5 6 7 8 9]))
+    (is (= (get-cell 1 2 board) [3 3 3 4 5 6 7 8 9]))
     ))
 
 (deftest getCell-test
@@ -59,10 +59,10 @@
         board [cell00 cell01 cell02
                cell10 cell11 cell12
                cell20 cell21 cell22]]
-    (is (= (getCell 0 0 board) cell00))
-    (is (= (getCell 0 1 board) cell01))
-    (is (= (getCell 1 2 board) cell12))
-    (is (= (getCell 2 2 board) cell22))
+    (is (= (get-cell 0 0 board) cell00))
+    (is (= (get-cell 0 1 board) cell01))
+    (is (= (get-cell 1 2 board) cell12))
+    (is (= (get-cell 2 2 board) cell22))
     ))
 
 
@@ -76,17 +76,17 @@
                [61 62 63 64 65 66 67 68 69]
                [71 72 73 74 75 76 77 78 79]
                [81 82 83 84 85 86 87 88 89]]]
-    (is (= (getRow 0 board) [1 2 3 11 12 13 21 22 23]))
-    (is (= (getRow 3 board) [31 32 33 41 42 43 51 52 53]))
-    (is (= (getRow 8 board) [67 68 69 77 78 79 87 88 89]))
+    (is (= (get-row 0 board) [1 2 3 11 12 13 21 22 23]))
+    (is (= (get-row 3 board) [31 32 33 41 42 43 51 52 53]))
+    (is (= (get-row 8 board) [67 68 69 77 78 79 87 88 89]))
     ))
 
 (deftest getColumn-test2
   (let [board solvedBoard
-        col1 (getColumn 0 board)
-        col4 (getColumn 3 board)
-        col9 (getColumn 8 board)]
-    (printBoard board)
+        col1 (get-column 0 board)
+        col4 (get-column 3 board)
+        col9 (get-column 8 board)]
+    (print-board board)
     (is (= col1 [5 6 1 8 4 7 9 2 3]))
     (is (= col4 [6 1 3 7 8 9 5 4 2]))
     (is (= col9 [2 8 7 3 1 6 4 5 9]))
@@ -106,15 +106,15 @@
         ]
     ;(println "Invalid board")
     ;(printBoard invalidBoard)
-    (is (isColumnValid? 0 validBoard))
-    (is (isColumnValid? 2 validBoard))
-    (is (isColumnValid? 3 validBoard))
-    (is (isColumnValid? 6 validBoard))
-    (is (isColumnValid? 8 validBoard))
-    (is (not (isColumnValid? 1 invalidBoard)))
-    (is (not (isColumnValid? 3 invalidBoard)))
-    (is (not (isColumnValid? 7 invalidBoard)))
-    (is (not (isColumnValid? 8 invalidBoard)))
+    (is (is-column-valid? 0 validBoard))
+    (is (is-column-valid? 2 validBoard))
+    (is (is-column-valid? 3 validBoard))
+    (is (is-column-valid? 6 validBoard))
+    (is (is-column-valid? 8 validBoard))
+    (is (not (is-column-valid? 1 invalidBoard)))
+    (is (not (is-column-valid? 3 invalidBoard)))
+    (is (not (is-column-valid? 7 invalidBoard)))
+    (is (not (is-column-valid? 8 invalidBoard)))
     ))
 
 (deftest isRowValid?-test
@@ -141,7 +141,7 @@
 
 (deftest removeBlanks-test
   (let [vectorWithZeroes [1 2 3 0 4 5 0]
-        vectorWithoutZeroes (removeBlanks vectorWithZeroes)]
+        vectorWithoutZeroes (remove-blanks vectorWithZeroes)]
     (is (= vectorWithoutZeroes [1 2 3 4 5]))
     )
   )
@@ -151,8 +151,8 @@
         cell2 [0 1 0 7 3 0 5 2 8]                           ;valid
         cell3 []                                            ;valid
         cell4 [0 1 2 0 4 1]]                                ;invalid, duplicate values
-    (is (isCellValid? cell1))
-    (is (isCellValid? cell2))
-    (is (isCellValid? cell3))
-    (is (not (isCellValid? cell4)))))
+    (is (is-cell-valid? cell1))
+    (is (is-cell-valid? cell2))
+    (is (is-cell-valid? cell3))
+    (is (not (is-cell-valid? cell4)))))
 

@@ -60,94 +60,108 @@
 (defn createInitialState []
   (createMediumBoard))
 
-(def gridSize 9)
+(defonce gridSize 9)
 
 
 ;defonce locks. Not good for debug purposes during development
 (def state-atom (atom {:board        (createInitialState)
-                       :initialized? false}))
+                       :initialized? false
+                       :previousBoards []}))
 
-(defn clearBoard []
+(defn clear-board! []
   (swap! state-atom assoc :board (createEmptyBoard)))
 
-(swap! state-atom assoc :initialized? false)
-(get-in @state-atom [:initialized?])
-(swap! state-atom assoc :initialized? true)
-(get-in @state-atom [:initialized?])
+;(swap! state-atom assoc :initialized? false)
+;(get-in @state-atom [:initialized?])
+;(@state-atom :initialized?)
+;(swap! state-atom assoc :initialized? true)
 
-(@state-atom :board)
-;(clearBoard)
-(get-in @state-atom [:board])
-
-(defn undoMove []
-  ;ToDo Add listener to state changes and save all boards
+(defn undo-move! []
+  ;ToDo Add listener to state changes that saves all previous boards
   )
 
-(def notSet 0)
+(def no-value 0)
 
-;(defn getBoard [] (get-in @state-atom [:board]))
-(defn getBoard [] (@state-atom :board))
+;(defn get-board [] (get-in @state-atom [:board]))
+(defn get-board [] (@state-atom :board))
 
-(defn getCell [r, c, board]
+(defn get-cell [r, c, board]
   "Returns a vector with all digits in cell. 0-indexed"
   (nth board (+ (* r 3) c)))
 
 
-(defn isCellComplete? [cell]
+(defn is-cell-complete? [cell]
   "Return true if cell contains 9 unique values between 1..9"
   (if (and (= 9 (count cell)) (= 9 (count (set cell))))
     (if (every? (fn [x] (and (< x 10) (> x 0))) cell)
       true false)))
 
-(defn removeBlanks [vect]
+(defn remove-blanks [vect]
   "Returns a vector without blanks"
-  (filter #(< 0 %) vect))
+  (filter #(not= no-value %) vect))
 
-(defn getRow [rix board]
+(defn get-row [rix board]
   "Returns the row at rownum. Zero indexed"
   ;r 0 1 2 -> cell 00, 01, 02
   ;r 3 4 5 -> cell 10, 11, 12
   ;r 6 7 8 -> cell 20, 21, 22
-  (let [cell1 (getCell (unchecked-divide-int rix 3) 0 board)
-        cell2 (getCell (unchecked-divide-int rix 3) 1 board)
-        cell3 (getCell (unchecked-divide-int rix 3) 2 board)]
-    (vector (nth cell1 (* (mod rix 3) 3)) (nth cell1 (+ (* (mod rix 3) 3) 1)) (nth cell1 (+ (* (mod rix 3) 3) 2))
-            (nth cell2 (* (mod rix 3) 3)) (nth cell2 (+ (* (mod rix 3) 3) 1)) (nth cell2 (+ (* (mod rix 3) 3) 2))
-            (nth cell3 (* (mod rix 3) 3)) (nth cell3 (+ (* (mod rix 3) 3) 1)) (nth cell3 (+ (* (mod rix 3) 3) 2)))))
+  (let [cell1 (get-cell (unchecked-divide-int rix 3) 0 board)
+        cell2 (get-cell (unchecked-divide-int rix 3) 1 board)
+        cell3 (get-cell (unchecked-divide-int rix 3) 2 board)
+        cellOffset (mod rix 3)]
+    (vector (nth cell1 (* cellOffset 3)) (nth cell1 (+ (* cellOffset 3) 1)) (nth cell1 (+ (* cellOffset 3) 2))
+            (nth cell2 (* cellOffset 3)) (nth cell2 (+ (* cellOffset 3) 1)) (nth cell2 (+ (* cellOffset 3) 2))
+            (nth cell3 (* cellOffset 3)) (nth cell3 (+ (* cellOffset 3) 1)) (nth cell3 (+ (* cellOffset 3) 2)))))
 
 (defn isRowValid? [rix board]
   "Returns true if row contains no duplicates"
-  (let [row (removeBlanks (getRow rix board))]
+  (let [row (remove-blanks (get-row rix board))]
     (= (count row) (count (set row)))
     ))
 
-(defn isCellValid? [cell]
+(defn is-cell-valid? [cell]
   "Return true if cell does not contain duplicate values"
-  (let [cellValues (removeBlanks cell)]
+  (let [cellValues (remove-blanks cell)]
     (= (count cellValues) (count (set cellValues)))))
 
-
-(defn getValue [r c]
+(defn get-value [r c]
   (let [board (@state-atom :board)
-        row (getRow r board)]
+        row (get-row r board)]
     (nth row c)))
 
+(defn get-cell-rc-from-board-rc [r c]
+  (let []
+    ))
 
-(defn getColumn [colix board]
+(defn set-value! [r c val]
+  (let [board (@state-atom :board)
+        rcVector (get-cell-rc-from-board-rc r c)
+        cell (get-cell (first rcVector) (last rcVector) board)]
+    ;set value in cell
+    ()
+    ;set cell in board
+
+    ;set board in state-atom
+
+    (swap! state-atom assoc :board (board))
+    ))
+
+
+(defn get-column [colix board]
   "Returns the col at colnum. Zero indexed"
   ;col 0 1 2 -> cell 00. 10. 20
   ;col 3 4 5 -> cell 01, 11, 21
   ;col 6 7 8 -> cell 02, 12, 22
-  (let [cell1 (getCell 0 (unchecked-divide-int colix 3) board)
-        cell2 (getCell 1 (unchecked-divide-int colix 3) board)
-        cell3 (getCell 2 (unchecked-divide-int colix 3) board)]
+  (let [cell1 (get-cell 0 (unchecked-divide-int colix 3) board)
+        cell2 (get-cell 1 (unchecked-divide-int colix 3) board)
+        cell3 (get-cell 2 (unchecked-divide-int colix 3) board)]
     (vector (nth cell1 (mod colix 3)) (nth cell1 (+ (mod colix 3) 3)) (nth cell1 (+ (mod colix 3) 6))
             (nth cell2 (mod colix 3)) (nth cell2 (+ (mod colix 3) 3)) (nth cell2 (+ (mod colix 3) 6))
             (nth cell3 (mod colix 3)) (nth cell3 (+ (mod colix 3) 3)) (nth cell3 (+ (mod colix 3) 6)))))
 
-(defn isColumnValid? [colix board]
+(defn is-column-valid? [colix board]
   "returns true if column contains no duplicates"
-  (let [col (removeBlanks (getColumn colix board))]
+  (let [col (remove-blanks (get-column colix board))]
     ;(println col " set: " (set col))
     (= (count col) (count (set col)))))
 
@@ -167,34 +181,19 @@
     lcell
     ))
 
-(def cell (createCompleteCell))
-;(println cell)
-
-
-(defn printBoard [board]
-  (println (getRow 0 board))
-  (println (getRow 1 board))
-  (println (getRow 2 board))
-  (println (getRow 3 board))
-  (println (getRow 4 board))
-  (println (getRow 5 board))
-  (println (getRow 6 board))
-  (println (getRow 7 board))
-  (println (getRow 8 board))
-  )
-
-(reduce
+(comment
+  (reduce
   (fn [primes number]
     (if (some zero? (map (partial mod number) primes))
       primes
       (conj primes number)))
   [2]
   (take 1000 (iterate inc 3)))
+  )
 
-;(take 1000 (iterate inc 3))
-
+(comment
 (defn myFirstUseOfReduce [rowix board]
-  (let [row (getRow rowix board)]
+  (let [row (get-row rowix board)]
     ;        strRow (clojure.string/join " " row)]
     (reduce (fn [strRow value]
               (if (= value 0)
@@ -203,9 +202,10 @@
                 ))
             []
             row)))
+)
 
-(defn getRowAsString [rix board]
-  (let [row (getRow rix board)
+(defn get-row-as-string [rix board]
+  (let [row (get-row rix board)
         rowStr (str "|" (clojure.string/replace (clojure.string/join row) #"..." #(str %1 \|)))
         rowStrWSpace (clojure.string/replace rowStr #"0" " ")]
     (clojure.string/replace rowStrWSpace #"." #(str %1 " "))
@@ -215,26 +215,26 @@
 (defn printBoardOld [board]
   (let [horBar "-------------------------"]
     (println horBar)
-    (println (getRowAsString 0 board))
-    (println (getRowAsString 1 board))
-    (println (getRowAsString 2 board))
+    (println (get-row-as-string 0 board))
+    (println (get-row-as-string 1 board))
+    (println (get-row-as-string 2 board))
     (println horBar)
-    (println (getRowAsString 3 board))
-    (println (getRowAsString 4 board))
-    (println (getRowAsString 5 board))
+    (println (get-row-as-string 3 board))
+    (println (get-row-as-string 4 board))
+    (println (get-row-as-string 5 board))
     (println horBar)
-    (println (getRowAsString 6 board))
-    (println (getRowAsString 7 board))
-    (println (getRowAsString 8 board))
+    (println (get-row-as-string 6 board))
+    (println (get-row-as-string 7 board))
+    (println (get-row-as-string 8 board))
     (println horBar)
     ))
 
-(defn printBoard [board]
+(defn print-board [board]
   (let [horBar "-------------------------"]
     (loop [r 0]
       (if (get #{0 3 6} r)
         (println horBar))
-      (println (getRowAsString r board))
+      (println (get-row-as-string r board))
       (when (< r 8)
         (recur (inc r))))
     (println horBar)
@@ -243,45 +243,42 @@
 
 ;(time (printBoard (@state-atom :board)))
 ;(time (printBoard learn-clojure.core-test/solvedBoard))
-
 ;(println (getRowAsString 3 (@state-atom :board)))
 ;(println (getRow 3 (@state-atom :board)))
 ;(println (clojure.string/replace (clojure.string/join " " (getRow 0 (get-in @state-atom [:board]))) #"0" " "))
 ;(printBoard (get-in @state-atom [:board]))
 
+(comment
 (loop [x 10]
   (when (> x 1)
     (println x)
     (recur (- x 2))))
-
-
-(macroexpand `#(< 1 (freqs %)))
-;(getBoard)
+)
+;(macroexpand `#(< 1 (freqs %)))
 
 ;-------------------------------------
 ;Diverse
 
-(def answer -1)
-(defn guess [my_guess]
-  (assert (> answer 0))
-  (def attempts (+ attempts 1))
-  (if (= my_guess answer)
-    (if (< attempts 4) "You made it in less than four attempts. Bravo!" "Correct!")
-    (if (< my_guess answer) "Too small!" "Too big")))
-(defn reset []
-  (def attempts 0)
-  (def answer (int (+ 1 (* (rand) 10))))
-  "Guess a number between 1 and 10")
+(def counter (atom 0))
 
-(reset)
-(guess 1)
-(guess 2)
-(guess 3)
-(guess 4)
-(guess 5)
-(guess 6)
-(guess 7)
-(guess 8)
-(guess 9)
-(guess 10)
+(defn guessing-game []
+  (let [answer (+ 1 (rand-int 10))]
+    (swap! counter 0)
+    (println @counter " Guess a number between 1 and 10")
+    (flush)
+    (loop []
+      (swap! counter inc)
+      ;(def guess (Integer/parseInt (re-find #"[0-9]*" (read-line))))
+      (def guess 5)
+      (println @counter " You guessed " guess)
+      (flush)
+      (if (= guess answer)
+        (println (if (< @counter 4) "You made it in less than four attempts. Bravo!" "Correct!"))
+        (flush))
+      (if (< guess answer) (println "Too small!"))
+      (if (> guess answer) (println "Too big"))
+      (when (not= guess answer)
+        (recur)))))
+
+;(guessing-game)
 
