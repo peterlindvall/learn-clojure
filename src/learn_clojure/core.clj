@@ -1,5 +1,6 @@
 (ns learn-clojure.core
-  (:require [clojure.math.numeric-tower :as math]))
+  (:require [clojure.math.numeric-tower :as math]
+            [learn-clojure.util :as util]))
 
 ;Data structures
 (comment
@@ -54,7 +55,7 @@
    [0 0 0 5 4 0 3 0 0]
    [0 0 0 0 0 6 5 7 0]
    [0 0 9 0 3 5 0 0 0]
-   [0 0 0 0 7 0 0 2 4]])
+   [0 6 0 0 7 0 0 2 4]])
 
 
 (defn createInitialState []
@@ -85,9 +86,14 @@
 ;(defn get-board [] (get-in @state-atom [:board]))
 (defn get-board [] (@state-atom :board))
 
-(defn get-cell [r, c, board]
+
+
+(defn get-cell
   "Returns a vector with all digits in cell. 0-indexed"
-  (nth board (+ (* r 3) c)))
+  ([cell-nbr board]
+   (get-cell (unchecked-divide-int cell-nbr 3) (mod cell-nbr 3) board))
+  ([r, c, board]
+   (nth board (+ (* r 3) c))))
 
 
 (defn is-cell-complete? [cell]
@@ -113,7 +119,7 @@
             (nth cell2 (* cellOffset 3)) (nth cell2 (+ (* cellOffset 3) 1)) (nth cell2 (+ (* cellOffset 3) 2))
             (nth cell3 (* cellOffset 3)) (nth cell3 (+ (* cellOffset 3) 1)) (nth cell3 (+ (* cellOffset 3) 2)))))
 
-(defn isRowValid? [rix board]
+(defn is-row-valid? [rix board]
   "Returns true if row contains no duplicates"
   (let [row (remove-blanks (get-row rix board))]
     (= (count row) (count (set row)))
@@ -166,22 +172,51 @@
 
 (defn create-complete-cell [input-cell]
   "Returns a randomly filled valid cell. Takes an empty or not empty cell"
-  ;ToDo enhance to preserve the position of input-cell's values (if has 0's, replace first 0, else append val)
-    (loop [store (vec (clojure.set/difference (set [1 2 3 4 5 6 7 8 9]) (set input-cell)))
-           cell input-cell
-           ix (rand-int (count store))]
-      (println "cell is " cell)
-      (println "ix is " ix)
-      (println "store is " store)
-      (if (= 0 (count store))
-        cell
-        (recur (filter #(not= (nth store ix) %) store)
-               (conj cell (nth store ix))
-               (rand-int (- (count store) 1))))))
+  ;ToDo difference of sets is convenient but what about order of elements...
+  (loop [store (vec (clojure.set/difference (set [1 2 3 4 5 6 7 8 9]) (set input-cell)))
+         cell input-cell
+         ix (rand-int (count store))]
+    (if (= 0 (count store))
+      cell
+      (recur (filter #(not= (nth store ix) %) store)
+             (if (util/in? cell no-value)                   ;cell has zeroes
+               ((comp vec flatten conj)
+                 (vector (first (split-with (fn [x] (> x 0)) cell)))
+                 (nth store ix)
+                 (subvec cell (+ 1 (.indexOf cell 0))))
+               (conj cell (nth store ix)))
+             (rand-int (- (count store) 1))))))
 
+(defn are-cells-valid? [board]
+  (loop [cell-ix 0]
+    (if (not (is-cell-valid? (get-cell cell-ix board)))
+      false
+      (if (< cell-ix 8)
+        (recur (inc cell-ix))
+        true))))
 
-(create-complete-cell [0 0 5 0 3])
+(defn are-rows-valid? [board]
+  (loop [row-ix 0]
+    (if (not (is-row-valid? row-ix board))
+      false
+      (if (< row-ix 8)
+        (recur (inc row-ix))
+        true))))
 
+(defn are-cols-valid? [board]
+  (loop [col-ix 0]
+    (if (not (is-column-valid? col-ix board))
+      false
+      (if (< col-ix 8)
+        (recur (inc col-ix))
+        true))))
+
+(defn is-board-valid? [board]
+  "Returns true if no cell, row or column has duplicate values"
+  (and (are-cells-valid? board) (are-rows-valid? board) (are-cols-valid? board))
+  )
+
+;(is-board-valid? (get-board))
 
 (comment
   (reduce
@@ -250,7 +285,7 @@
 (defn -main [& args]
   (let [answer (+ 1 (rand-int 10))]
     (println "Guess a number between 1 and 10")
-    (print "-> ")(flush)
+    (print "-> ") (flush)
     (loop []
       (swap! counter inc)
       (def guess (Integer/parseInt (re-find #"[0-9]*" (read-line))))

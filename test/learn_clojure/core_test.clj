@@ -15,7 +15,7 @@
                   [2 8 4 6 3 5 1 7 9]])
 
 
-(deftest isCellComplete-test
+(deftest is-cell-complete-test
   (let [board [[1 2 3 4 5 6 7 8 9]                          ;r0 c0 (correct)
                [1 2 3 4 5 6 7 8]                            ;r0 c1 (value missing)
                [1 2 0 4 5 6 7 8 9]                          ;r0 c2 (invalid value, to small)
@@ -33,7 +33,7 @@
     (is (not (is-cell-complete? (nth board 4))))
     (is (not (is-cell-complete? (nth board 5))))))
 
-(deftest getCell-test
+(deftest get-cell-test
   (let [board [[1 2 3 4 5 6 7 8 9]                          ;r0 c0
                [1 2 3 4 5 6 7 8]                            ;r0 c1
                [1 2 0 4 5 6 7 8 9]                          ;r0 c2
@@ -46,7 +46,7 @@
     (is (= (get-cell 1 2 board) [3 3 3 4 5 6 7 8 9]))
     ))
 
-(deftest getCell-test
+(deftest get-cell-test
   (let [cell00 [1 2 3 4 5 6 7 8 9]
         cell01 [11 12 13 14 15 16 17 18 19]
         cell02 [21 22 23 24 25 26 27 28 29]
@@ -66,7 +66,7 @@
     ))
 
 
-(deftest getRow-test
+(deftest get-row-test
   (let [board [[1 2 3 4 5 6 7 8 9]
                [11 12 13 14 15 16 17 18 19]
                [21 22 23 24 25 26 27 28 29]
@@ -81,7 +81,7 @@
     (is (= (get-row 8 board) [67 68 69 77 78 79 87 88 89]))
     ))
 
-(deftest getColumn-test2
+(deftest get-column-test
   (let [board solvedBoard
         col1 (get-column 0 board)
         col4 (get-column 3 board)
@@ -92,7 +92,7 @@
     (is (= col9 [2 8 7 3 1 6 4 5 9]))
     ))
 
-(deftest isColumnValid?-test
+(deftest is-column-valid?-test
   (let [validBoard solvedBoard
         invalidBoard [[5 3 4 6 7 2 1 9 8]
                       [6 8 7 1 9 5 3 4 2]
@@ -117,7 +117,7 @@
     (is (not (is-column-valid? 8 invalidBoard)))
     ))
 
-(deftest isRowValid?-test
+(deftest is-row-valid?-test
   (let [validBoard solvedBoard
         invalidBoard [[5 3 4 6 7 2 1 9 8]
                       [6 8 7 1 9 5 3 4 2]
@@ -139,14 +139,14 @@
     (is (not (isRowValid? 8 invalidBoard)))
     ))
 
-(deftest removeBlanks-test
+(deftest remove-blanks-test
   (let [vectorWithZeroes [1 2 3 0 4 5 0]
         vectorWithoutZeroes (remove-blanks vectorWithZeroes)]
     (is (= vectorWithoutZeroes [1 2 3 4 5]))
     )
   )
 
-(deftest isCellValid?-test
+(deftest is-cell-valid?-test
   (let [cell1 [3 2 1 4 5 6 8 7 9]                           ;valid
         cell2 [0 1 0 7 3 0 5 2 8]                           ;valid
         cell3 []                                            ;valid
@@ -156,3 +156,13 @@
     (is (is-cell-valid? cell3))
     (is (not (is-cell-valid? cell4)))))
 
+(deftest create-complete-cell-test
+  (let [cell1 (create-complete-cell [])
+        cell2 (create-complete-cell [5 3])
+        cell3 (create-complete-cell [0 0 0 0 0 0 0 0 0])
+        cell4 (create-complete-cell [0 3 0 6 0])]
+    (is (and (is-cell-valid? cell1) (is-cell-complete? cell1)))
+    (is (and (is-cell-valid? cell2) (is-cell-complete? cell2)))
+    (is (and (is-cell-valid? cell3) (is-cell-complete? cell3)))
+    (is (and (is-cell-valid? cell4) (is-cell-complete? cell4)))
+    ))
