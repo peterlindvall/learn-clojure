@@ -164,21 +164,24 @@
     ;(println col " set: " (set col))
     (= (count col) (count (set col)))))
 
-(defn createCompleteCell []
-  "Fill cell with random values"
-  ;vector with all digs
-  (let [store [1 2 3 4 5 6 7 8 9]
-        lcell []
-        dig (rand-int (count store))]
-    (loop [x 8]
-      (when (>= x 0)
-        (conj lcell (nth store (rand-int (count store))))
-        ;(println (conj cell (nth store (rand-int (count store )))))
-        (println lcell)
+(defn create-complete-cell [input-cell]
+  "Returns a randomly filled valid cell. Takes an empty or not empty cell"
+  ;ToDo enhance to preserve the position of input-cell's values (if has 0's, replace first 0, else append val)
+    (loop [store (vec (clojure.set/difference (set [1 2 3 4 5 6 7 8 9]) (set input-cell)))
+           cell input-cell
+           ix (rand-int (count store))]
+      (println "cell is " cell)
+      (println "ix is " ix)
+      (println "store is " store)
+      (if (= 0 (count store))
+        cell
+        (recur (filter #(not= (nth store ix) %) store)
+               (conj cell (nth store ix))
+               (rand-int (- (count store) 1))))))
 
-        ))
-    lcell
-    ))
+
+(create-complete-cell [0 0 5 0 3])
+
 
 (comment
   (reduce
