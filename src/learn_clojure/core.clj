@@ -1,6 +1,7 @@
 (ns learn-clojure.core
   (:require [clojure.math.numeric-tower :as math]
-            [learn-clojure.util :as util]))
+            [learn-clojure.util :as util]
+            [clojure.set :as set]))
 
 ;Data structures
 (comment
@@ -173,10 +174,10 @@
 (defn create-complete-cell [input-cell]
   "Returns a randomly filled valid cell. Takes an empty or not empty cell"
   ;ToDo difference of sets is convenient but what about order of elements...
-  (loop [store (vec (clojure.set/difference (set [1 2 3 4 5 6 7 8 9]) (set input-cell)))
+  (loop [store (vec (set/difference (set [1 2 3 4 5 6 7 8 9]) (set input-cell)))
          cell input-cell
          ix (rand-int (count store))]
-    (if (= 0 (count store))
+    (if (empty? store)
       cell
       (recur (filter #(not= (nth store ix) %) store)
              (if (util/in? cell no-value)                   ;cell has zeroes
@@ -278,24 +279,28 @@
 ;(macroexpand `#(< 1 (freqs %)))
 
 ;-------------------------------------
-;Diverse
+; Guessing game
+(def guess-state (atom {}))
 
-(def counter (atom 0))
+(defn initialize-state []
+  (swap! guess-state assoc :answer (+ 1 (rand-int 10)))
+  (swap! guess-state assoc :counter 0)
+  )
 
 (defn -main [& args]
-  (let [answer (+ 1 (rand-int 10))]
-    (println "Guess a number between 1 and 10")
-    (print "-> ") (flush)
-    (loop []
-      (swap! counter inc)
-      (def guess (Integer/parseInt (re-find #"[0-9]*" (read-line))))
-      (if (= guess answer)
-        (if (< @counter 4)
-          (println "You made it in" @counter "attempts. Bravo!")
-          (println "That is correct!")))
-      (if (< guess answer) (print "That is too small!\n-> "))
-      (if (> guess answer) (print "That is too big!\n-> "))
-      (flush)
-      (when (not= guess answer)
-        (recur)))))
+  (initialize-state)
+  (println "Guess a number between 1 and 10")
+  (print "-> ") (flush)
+  (loop []
+    (swap! guess-state update-in [:counter] inc)
+    (def guess (Integer/parseInt (re-find #"[0-9]*" (read-line))))
+    (if (= (@guess-state :answer) guess)
+      (if (< (@guess-state :counter) 4)
+        (println "You made it in" (@guess-state :counter) "attempts. Bravo!")
+        (println "That is correct!")))
+    (if (< guess (@guess-state :answer)) (print "That is too small!\n-> "))
+    (if (> guess (@guess-state :answer)) (print "That is too big!\n-> "))
+    (flush)
+    (when (not= guess (@guess-state :answer))
+      (recur))))
 

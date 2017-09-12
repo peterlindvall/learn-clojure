@@ -129,14 +129,14 @@
                       [5 3 4 7 1 9 2 8 6]
                       [9 8 4 6 3 5 1 7 2]]]
     ;(println (getRow 5 invalidBoard))
-    (is (isRowValid? 0 validBoard))
-    (is (isRowValid? 2 validBoard))
-    (is (isRowValid? 5 validBoard))
-    (is (isRowValid? 8 validBoard))
-    (is (not (isRowValid? 0 invalidBoard)))
-    (is (not (isRowValid? 2 invalidBoard)))
-    (is (not (isRowValid? 5 invalidBoard)))
-    (is (not (isRowValid? 8 invalidBoard)))
+    (is (is-row-valid? 0 validBoard))
+    (is (is-row-valid? 2 validBoard))
+    (is (is-row-valid? 5 validBoard))
+    (is (is-row-valid? 8 validBoard))
+    (is (not (is-row-valid? 0 invalidBoard)))
+    (is (not (is-row-valid? 2 invalidBoard)))
+    (is (not (is-row-valid? 5 invalidBoard)))
+    (is (not (is-row-valid? 8 invalidBoard)))
     ))
 
 (deftest remove-blanks-test
