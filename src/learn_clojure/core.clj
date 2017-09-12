@@ -126,9 +126,9 @@
     (= (count row) (count (set row)))
     ))
 
-(defn is-cell-valid? [cell]
+(defn is-cell-valid? [cell-ix board]
   "Return true if cell does not contain duplicate values"
-  (let [cellValues (remove-blanks cell)]
+  (let [cellValues (remove-blanks (get-cell cell-ix board))]
     (= (count cellValues) (count (set cellValues)))))
 
 (defn get-value [r c]
@@ -188,36 +188,21 @@
                (conj cell (nth store ix)))
              (rand-int (- (count store) 1))))))
 
-(defn are-cells-valid? [board]
-  (loop [cell-ix 0]
-    (if (not (is-cell-valid? (get-cell cell-ix board)))
+(defn is-valid? [validator-fn board]
+  (loop [ix 0]
+    (if (not (validator-fn ix board))
       false
-      (if (< cell-ix 8)
-        (recur (inc cell-ix))
-        true))))
-
-(defn are-rows-valid? [board]
-  (loop [row-ix 0]
-    (if (not (is-row-valid? row-ix board))
-      false
-      (if (< row-ix 8)
-        (recur (inc row-ix))
-        true))))
-
-(defn are-cols-valid? [board]
-  (loop [col-ix 0]
-    (if (not (is-column-valid? col-ix board))
-      false
-      (if (< col-ix 8)
-        (recur (inc col-ix))
+      (if (< ix 8)
+        (recur (inc ix))
         true))))
 
 (defn is-board-valid? [board]
   "Returns true if no cell, row or column has duplicate values"
-  (and (are-cells-valid? board) (are-rows-valid? board) (are-cols-valid? board))
+;  (and (are-cells-valid? board) (are-rows-valid? board) (are-cols-valid? board))
+  (and (is-valid? is-cell-valid? board) (is-valid? is-row-valid? board) (is-valid? is-column-valid? board))
   )
 
-;(is-board-valid? (get-board))
+(is-board-valid? (get-board))
 
 (comment
   (reduce

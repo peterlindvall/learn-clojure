@@ -147,22 +147,23 @@
   )
 
 (deftest is-cell-valid?-test
-  (let [cell1 [3 2 1 4 5 6 8 7 9]                           ;valid
-        cell2 [0 1 0 7 3 0 5 2 8]                           ;valid
-        cell3 []                                            ;valid
-        cell4 [0 1 2 0 4 1]]                                ;invalid, duplicate values
-    (is (is-cell-valid? cell1))
-    (is (is-cell-valid? cell2))
-    (is (is-cell-valid? cell3))
-    (is (not (is-cell-valid? cell4)))))
+  (let [
+        validBoard [[5 3 4 6 7 2 1 9 8]]
+        invalidBoard [[5 3 4 6 7 8 1 9 8]
+                      [6 8 0 1 9 6 3 4 2]
+                      [9 7 2 4 3 8 5 1 7]]]
+    (is (is-cell-valid? 0 validBoard))
+    (is (not (is-cell-valid? 0 invalidBoard)))
+    (is (not (is-cell-valid? 0 invalidBoard)))
+    (is (not (is-cell-valid? 0 invalidBoard)))))
 
 (deftest create-complete-cell-test
   (let [cell1 (create-complete-cell [])
         cell2 (create-complete-cell [5 3])
         cell3 (create-complete-cell [0 0 0 0 0 0 0 0 0])
         cell4 (create-complete-cell [0 3 0 6 0])]
-    (is (and (is-cell-valid? cell1) (is-cell-complete? cell1)))
-    (is (and (is-cell-valid? cell2) (is-cell-complete? cell2)))
-    (is (and (is-cell-valid? cell3) (is-cell-complete? cell3)))
-    (is (and (is-cell-valid? cell4) (is-cell-complete? cell4)))
+    (is (and (is-cell-valid? 0 [cell1]) (is-cell-complete? cell1)))
+    (is (and (is-cell-valid? 0 [cell2]) (is-cell-complete? cell2)))
+    (is (and (is-cell-valid? 0 [cell3]) (is-cell-complete? cell3)))
+    (is (and (is-cell-valid? 0 [cell4]) (is-cell-complete? cell4)))
     ))
