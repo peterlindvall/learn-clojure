@@ -65,10 +65,12 @@
 (defonce gridSize 9)
 
 
-;defonce locks. Not good for debug purposes during development
+;defonce locks for redefines
 (def state-atom (atom {:board          (createInitialState)
                        :initialized?   false
                        :previousBoards []}))
+
+
 
 (defn clear-board! []
   (swap! state-atom assoc :board (createEmptyBoard)))
@@ -189,6 +191,8 @@
              (rand-int (- (count store) 1))))))
 
 (defn is-valid? [validator-fn board]
+  "Returns true if validator-fn returns true for all"
+  ;ToDo Can this func be replace with reduce?
   (loop [ix 0]
     (if (not (validator-fn ix board))
       false
@@ -198,7 +202,7 @@
 
 (defn is-board-valid? [board]
   "Returns true if no cell, row or column has duplicate values"
-;  (and (are-cells-valid? board) (are-rows-valid? board) (are-cols-valid? board))
+  ;  (and (are-cells-valid? board) (are-rows-valid? board) (are-cols-valid? board))
   (and (is-valid? is-cell-valid? board) (is-valid? is-row-valid? board) (is-valid? is-column-valid? board))
   )
 
@@ -262,6 +266,8 @@
         (recur (- x 2))))
     )
 ;(macroexpand `#(< 1 (freqs %)))
+;  (def my-atom-map (atom {:map {}}))
+;(swap! my-atom-map assoc-in [:map (keyword "1")] 9))
 
 ;-------------------------------------
 ; Guessing game
@@ -270,22 +276,33 @@
 (defn initialize-state []
   (swap! guess-state assoc :answer (+ 1 (rand-int 10)))
   (swap! guess-state assoc :counter 0)
-  )
+  (swap! guess-state assoc :guesses {})
+  (add-watch guess-state :guess-watch
+             (fn [key atom old-state new-state]
+               ;(prn "-- Atom Changed --")
+               ;(prn "key" key)
+               ;(prn "Keyword is " (keyword (str (:counter new-state))))
+               ;(prn "old-state" old-state)
+               ;(prn "new-state" new-state)
+               (if (not= (old-state :counter) (new-state :counter))
+                 (swap! guess-state assoc-in [:guesses (keyword (str (:counter new-state)))] (new-state :guess))))))
 
 (defn -main [& args]
   (initialize-state)
   (println "Guess a number between 1 and 10")
   (print "-> ") (flush)
   (loop []
+    (swap! guess-state assoc :guess (Integer/parseInt (re-find #"[0-9]*" (read-line))))
     (swap! guess-state update-in [:counter] inc)
-    (def guess (Integer/parseInt (re-find #"[0-9]*" (read-line))))
-    (if (= (@guess-state :answer) guess)
-      (if (< (@guess-state :counter) 4)
-        (println "You made it in" (@guess-state :counter) "attempts. Bravo!")
-        (println "That is correct!")))
-    (if (< guess (@guess-state :answer)) (print "That is too small!\n-> "))
-    (if (> guess (@guess-state :answer)) (print "That is too big!\n-> "))
-    (flush)
-    (when (not= guess (@guess-state :answer))
-      (recur))))
-
+    (if (= (@guess-state :answer) (@guess-state :guess))
+      (do
+        (println "You guessed" (vals(@guess-state :guesses)))
+        (if (< (@guess-state :counter) 4)
+          (println "You made it in" (@guess-state :counter) "attempts. Bravo!")
+          (println "That is correct!"))
+        ))
+      (if (< (@guess-state :guess) (@guess-state :answer)) (print "That is too small!\n-> "))
+      (if (> (@guess-state :guess) (@guess-state :answer)) (print "That is too big!\n-> "))
+      (flush)
+      (when (not= (@guess-state :guess) (@guess-state :answer))
+        (recur))))
