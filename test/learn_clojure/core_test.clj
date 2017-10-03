@@ -4,7 +4,7 @@
             [learn-clojure.util :refer :all]))
 
 
-(def solvedBoard [[5 3 4 6 7 2 1 9 8]
+(defonce solvedBoard [[5 3 4 6 7 2 1 9 8]
                   [6 7 8 1 9 5 3 4 2]
                   [9 1 2 3 4 8 5 6 7]
                   [8 5 9 4 2 6 7 1 3]
@@ -140,7 +140,7 @@
     ))
 
 (deftest remove-blanks-test
-  (let [vectorWithZeroes [1 2 3 0 4 5 0]
+  (let [vectorWithZeroes [0 1 2 3 0 4 5 0]
         vectorWithoutZeroes (remove-blanks vectorWithZeroes)]
     (is (= vectorWithoutZeroes [1 2 3 4 5]))
     )
@@ -162,8 +162,20 @@
         cell2 (create-complete-cell [5 3])
         cell3 (create-complete-cell [0 0 0 0 0 0 0 0 0])
         cell4 (create-complete-cell [0 3 0 6 0])]
-    (is (and (is-cell-valid? 0 [cell1]) (is-cell-complete? cell1)))
-    (is (and (is-cell-valid? 0 [cell2]) (is-cell-complete? cell2)))
-    (is (and (is-cell-valid? 0 [cell3]) (is-cell-complete? cell3)))
-    (is (and (is-cell-valid? 0 [cell4]) (is-cell-complete? cell4)))
+    (is (is-cell-complete? cell1))
+    (is (is-cell-complete? cell2))
+    (is (is-cell-complete? cell3))
+    (is (is-cell-complete? cell4))
     ))
+
+(deftest get-value-test
+  (is (= (get-value solvedBoard 0 0) 5))
+  (is (= (get-value solvedBoard 4 3) 8))
+  )
+;------------------------------
+
+(deftest abs-test
+  (is (= (absolute 4) 4))
+  (is (= (absolute -4) 4))
+  (is (= (absolute -100) 100))
+  )

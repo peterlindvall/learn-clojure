@@ -133,16 +133,19 @@
   (let [cellValues (remove-blanks (get-cell cell-ix board))]
     (= (count cellValues) (count (set cellValues)))))
 
-(defn get-value [r c]
-  (let [board (@state-atom :board)
-        row (get-row r board)]
+(defn get-value [board r c]
+  (let [row (get-row r board)]
     (nth row c)))
 
 (defn get-cell-rc-from-board-rc [r c]
-  (let []
+  ;row 0-2 -> cell 0-2
+  ;col 0-2 -> cell 0, 3, 6
+  ;get-cell-rc-from-board-rc 1 1 -> cell 0, dig 4
+  (vector () ()
     ))
 
 (defn set-value! [r c val]
+  ;ToDo write function
   (let [board (@state-atom :board)
         rcVector (get-cell-rc-from-board-rc r c)
         cell (get-cell (first rcVector) (last rcVector) board)]
@@ -151,7 +154,6 @@
     ;set cell in board
 
     ;set board in state-atom
-
     (swap! state-atom assoc :board (board))
     ))
 
@@ -170,12 +172,11 @@
 (defn is-column-valid? [colix board]
   "returns true if column contains no duplicates"
   (let [col (remove-blanks (get-column colix board))]
-    ;(println col " set: " (set col))
     (= (count col) (count (set col)))))
 
 (defn create-complete-cell [input-cell]
   "Returns a randomly filled valid cell. Takes an empty or not empty cell"
-  ;ToDo difference of sets is convenient but what about order of elements...
+  ;ToDo difference of sets is convenient but does set preserve order of elements at all times?
   (loop [store (vec (set/difference (set [1 2 3 4 5 6 7 8 9]) (set input-cell)))
          cell input-cell
          ix (rand-int (count store))]
@@ -255,7 +256,7 @@
 ;(time (printBoard learn-clojure.core-test/solvedBoard))
 ;(println (getRow 3 (@state-atom :board)))
 ;(println (getRowAsString 3 (@state-atom :board)))
-;(println (clojure.string/replace (clojure.string/join " " (getRow 0 (get-in @state-atom [:board]))) #"0" " "))
+;(println (clojure.string/replace (clojure.string/join " " (get-row 0 (@state-atom :board))) #"0" " "))
 ;(printBoard (get-in @state-atom [:board]))
 #_(defn -main [& args]
     ;;   "Application entry point"
@@ -306,3 +307,28 @@
       (flush)
       (when (not= (@guess-state :guess) (@guess-state :answer))
         (recur))))
+
+
+
+
+;------------------------------------
+
+(defn absolute-sqrt [x]
+  (clojure.math.numeric-tower/sqrt (* x x))
+  )
+
+(defn absolute [x]
+  (if (< x 0) (* x -1) x))
+
+(defn square [x]
+  (* x x)
+  )
+
+(defn benchmark [func]
+  (loop [x 1]
+    (func x)
+    (when (< x 1000000)
+      (recur (inc x)))))
+
+(time (benchmark absolute))
+(time (benchmark absolute-sqrt))
