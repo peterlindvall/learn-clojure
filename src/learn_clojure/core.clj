@@ -1,7 +1,8 @@
 (ns learn-clojure.core
   (:require [clojure.math.numeric-tower :as math]
             [learn-clojure.util :as util]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [clojure.test :refer :all]))
 
 ;Data structures
 (comment
@@ -20,7 +21,7 @@
   r8........|........|........|
   -----------------------------
 
-  Note! A vector in the board datastructure represents a cell, not a row on the board
+  Note! A vector in the board data structure represents a cell, not a row on the board
   )
 
 (defn createBoard []
@@ -64,16 +65,18 @@
 
 (defonce gridSize 9)
 
-
-;defonce locks for redefines
-(def state-atom (atom {:board          (createInitialState)
+(def state-atom (atom {:board          (createMediumBoard)
                        :initialized?   false
                        :previousBoards []}))
 
-
+(defn update-board! [board]
+  (swap! state-atom assoc :board board))
 
 (defn clear-board! []
   (swap! state-atom assoc :board (createEmptyBoard)))
+
+(defn reset-board! []
+  (swap! state-atom assoc :board (createMediumBoard)))
 
 ;(swap! state-atom assoc :initialized? false)
 ;(get-in @state-atom [:initialized?])
@@ -88,16 +91,14 @@
 
 ;(defn get-board [] (get-in @state-atom [:board]))
 (defn get-board [] (@state-atom :board))
-
-
+(@state-atom :board)
 
 (defn get-cell
-  "Returns a vector with all digits in cell. 0-indexed"
-  ([cell-nbr board]
-   (get-cell (unchecked-divide-int cell-nbr 3) (mod cell-nbr 3) board))
-  ([r, c, board]
+  "Returns a cell from the board"
+  ([board, cell-nbr]
+   (get-cell board (unchecked-divide-int cell-nbr 3) (mod cell-nbr 3)))
+  ([board, r, c]
    (nth board (+ (* r 3) c))))
-
 
 (defn is-cell-complete? [cell]
   "Return true if cell contains 9 unique values between 1..9"
@@ -105,18 +106,32 @@
     (if (every? (fn [x] (and (< x 10) (> x 0))) cell)
       true false)))
 
-(defn remove-blanks [vect]
+#_(defn is-cell-complete? [cell]
+    "Return true if cell contains 9 unique values between 1..9"
+    ;works fine but is 10% slower, possibly because two iterations over the vector
+    (and
+      (= 9 (count cell))
+      (= 9 (count (set cell)))
+      (< (apply max cell) 10)
+      (> (apply min cell) 0))
+    )
+
+(defn remove-blanks
+  {:test (fn [] (is (= (remove-blanks [0 1 0 2 0 3 0 0 4]) [1 2 3 4])))}
+  [value-vect]
   "Returns a vector without blanks"
-  (filter #(not= no-value %) vect))
+  {:pre [(vector? value-vect)]}
+  (filter #(not= no-value %) value-vect))
 
 (defn get-row [rix board]
   "Returns the row at rownum. Zero indexed"
   ;r 0 1 2 -> cell 00, 01, 02
   ;r 3 4 5 -> cell 10, 11, 12
   ;r 6 7 8 -> cell 20, 21, 22
-  (let [cell1 (get-cell (unchecked-divide-int rix 3) 0 board)
-        cell2 (get-cell (unchecked-divide-int rix 3) 1 board)
-        cell3 (get-cell (unchecked-divide-int rix 3) 2 board)
+  (let [cell-row (unchecked-divide-int rix 3)
+        cell1 (get-cell board cell-row 0)
+        cell2 (get-cell board cell-row 1)
+        cell3 (get-cell board cell-row 2)
         cellOffset (mod rix 3)]
     (vector (nth cell1 (* cellOffset 3)) (nth cell1 (+ (* cellOffset 3) 1)) (nth cell1 (+ (* cellOffset 3) 2))
             (nth cell2 (* cellOffset 3)) (nth cell2 (+ (* cellOffset 3) 1)) (nth cell2 (+ (* cellOffset 3) 2))
@@ -125,36 +140,46 @@
 (defn is-row-valid? [rix board]
   "Returns true if row contains no duplicates"
   (let [row (remove-blanks (get-row rix board))]
-    (= (count row) (count (set row)))
-    ))
+    (= (count row) (count (set row)))))
 
 (defn is-cell-valid? [cell-ix board]
   "Return true if cell does not contain duplicate values"
-  (let [cellValues (remove-blanks (get-cell cell-ix board))]
+  (let [cellValues (remove-blanks (get-cell board cell-ix))]
     (= (count cellValues) (count (set cellValues)))))
 
 (defn get-value [board r c]
   (let [row (get-row r board)]
     (nth row c)))
 
-(defn get-cell-rc-from-board-rc [r c]
-  ;row 0-2 -> cell 0-2
-  ;col 0-2 -> cell 0, 3, 6
-  ;get-cell-rc-from-board-rc 1 1 -> cell 0, dig 4
-  (vector () ()
-    ))
+(defn board-pos-to-cell-pos [r c]
+  "returns the cell position for any given board position"
+  (vector (unchecked-divide-int r 3) (unchecked-divide-int c 3)))
 
-(defn set-value! [r c val]
-  ;ToDo write function
-  (let [board (@state-atom :board)
-        rcVector (get-cell-rc-from-board-rc r c)
-        cell (get-cell (first rcVector) (last rcVector) board)]
-    ;set value in cell
-    ()
-    ;set cell in board
+(defn board-pos-to-cell-ix [r c]
+  (let [cellpos (board-pos-to-cell-pos r c)]
+    (+ (* (first cellpos) 3) (second cellpos))))
 
-    ;set board in state-atom
-    (swap! state-atom assoc :board (board))
+(defn board-pos-to-value-ix [r c]
+  "returns the index the board pos has in the cell"
+  (+ (* (mod r 3) 3) (mod c 3)))
+
+(defn set-value-in-cell [cell pos val]
+  "returns a new cell with val set at given position"
+  ((comp vec flatten conj)
+    (subvec cell 0 pos)
+    (vector val)
+    (subvec cell (+ 1 pos))))
+
+(defn set-cell-in-board [board pos cell]
+  "returns a new cell with val set at given position"
+  (apply conj (subvec board 0 pos) cell (subvec board (+ pos 1)))
+  )
+
+(defn set-value-in-board [board r c val]
+  "returns a board with the new value set at the given position"
+  (let [cellix (board-pos-to-cell-ix r c)
+        cell (get-cell board cellix)]
+    (set-cell-in-board board cellix (set-value-in-cell cell (board-pos-to-value-ix r c) val))
     ))
 
 (defn get-column [colix board]
@@ -162,12 +187,14 @@
   ;col 0 1 2 -> cell 00. 10. 20
   ;col 3 4 5 -> cell 01, 11, 21
   ;col 6 7 8 -> cell 02, 12, 22
-  (let [cell1 (get-cell 0 (unchecked-divide-int colix 3) board)
-        cell2 (get-cell 1 (unchecked-divide-int colix 3) board)
-        cell3 (get-cell 2 (unchecked-divide-int colix 3) board)]
-    (vector (nth cell1 (mod colix 3)) (nth cell1 (+ (mod colix 3) 3)) (nth cell1 (+ (mod colix 3) 6))
-            (nth cell2 (mod colix 3)) (nth cell2 (+ (mod colix 3) 3)) (nth cell2 (+ (mod colix 3) 6))
-            (nth cell3 (mod colix 3)) (nth cell3 (+ (mod colix 3) 3)) (nth cell3 (+ (mod colix 3) 6)))))
+  (let [cell-col (unchecked-divide-int colix 3)
+        cell1 (get-cell board 0 cell-col)
+        cell2 (get-cell board 1 cell-col)
+        cell3 (get-cell board 2 cell-col)
+        offset (mod colix 3)]
+    (vector (nth cell1 offset) (nth cell1 (+ offset 3)) (nth cell1 (+ offset 6))
+            (nth cell2 offset) (nth cell2 (+ offset 3)) (nth cell2 (+ offset 6))
+            (nth cell3 offset) (nth cell3 (+ offset 3)) (nth cell3 (+ offset 6)))))
 
 (defn is-column-valid? [colix board]
   "returns true if column contains no duplicates"
@@ -192,8 +219,8 @@
              (rand-int (- (count store) 1))))))
 
 (defn is-valid? [validator-fn board]
-  "Returns true if validator-fn returns true for all"
-  ;ToDo Can this func be replace with reduce?
+  "Returns true if validator-fn returns true for the board"
+  ;ToDo Can this func be replaced with reduce?
   (loop [ix 0]
     (if (not (validator-fn ix board))
       false
@@ -203,11 +230,8 @@
 
 (defn is-board-valid? [board]
   "Returns true if no cell, row or column has duplicate values"
-  ;  (and (are-cells-valid? board) (are-rows-valid? board) (are-cols-valid? board))
   (and (is-valid? is-cell-valid? board) (is-valid? is-row-valid? board) (is-valid? is-column-valid? board))
   )
-
-(is-board-valid? (get-board))
 
 (comment
   (reduce
@@ -252,6 +276,65 @@
     )
   )
 
+#_(defn find-valid-move
+  "Returns a collection of of valid moves (boardrow, boardcol, digit)"
+  ;ToDo
+  {:test (fn []
+           (let [board (createMediumBoard)]
+             (is (= (find-valid-move board) [0 4 6]))))}
+  [board]
+  (let [freq-map (frequencies (remove-blanks (flatten board)))
+        sorted-freq-map (into (sorted-map-by (fn [key1 key2]
+                                               (compare [(get freq-map key2) key2]
+                                                        [(get freq-map key1) key1]))) freq-map) ;sort map on values
+        value-list (keys sorted-freq-map)
+        value (first value-list)
+        cell (get-cell board 0)
+        ]
+    (println cell)
+    (loop [pos 0
+           valid-positions []]
+      (if (and (= (nth cell pos) no-value) (is-board-valid? (set-value-in-board board (unchecked-divide-int pos 3) (mod pos 3) value))
+               (when (< pos 8)
+                 (recur (inc pos) (conj valid-positions pos)))
+               (println valid-positions))
+        )
+      [0 4 6]
+      )))
+
+;  (find-valid-move (get-board))
+
+(def m2 {1 2 3 4})
+(hash-map 1 2 3 4)
+;-----------------
+;play soduko
+
+;(print-board (get-board))
+;(clear-board!)
+;(reset-board!)
+
+(defn play-around [cell-nbr]
+  (let [newCell (create-complete-cell (get-cell (get-board) cell-nbr))
+        newBoard (set-cell-in-board (get-board) cell-nbr newCell)]
+    (when (is-board-valid? newBoard)
+      (update-board! newBoard))))
+
+(defn brute-force [cell-nbr]
+  (loop [counter 0]
+    (if (play-around cell-nbr)
+      (println "Counter: " counter)
+      (recur (inc counter))))
+  (print-board (get-board)))
+
+;(println (find-valid-move (get-board)))
+;  (time (brute-force 5))
+(update-board! (set-value-in-board (@state-atom :board) 0 8 2))
+(is-board-valid? (get-board))
+;(print-board (get-board))
+;--------------------
+
+;(type(read-line))
+
 ;(time (printBoard (@state-atom :board)))
 ;(time (printBoard learn-clojure.core-test/solvedBoard))
 ;(println (getRow 3 (@state-atom :board)))
@@ -274,42 +357,94 @@
 ; Guessing game
 (def guess-state (atom {}))
 
-(defn initialize-state []
-  (swap! guess-state assoc :answer (+ 1 (rand-int 10)))
-  (swap! guess-state assoc :counter 0)
-  (swap! guess-state assoc :guesses {})
+(defn add-guess-watch []
   (add-watch guess-state :guess-watch
              (fn [key atom old-state new-state]
-               ;(prn "-- Atom Changed --")
-               ;(prn "key" key)
-               ;(prn "Keyword is " (keyword (str (:counter new-state))))
-               ;(prn "old-state" old-state)
-               ;(prn "new-state" new-state)
                (if (not= (old-state :counter) (new-state :counter))
                  (swap! guess-state assoc-in [:guesses (keyword (str (:counter new-state)))] (new-state :guess))))))
 
+(defn initialize-state! []
+  (swap! guess-state assoc :answer (+ 1 (rand-int 10)))
+  (swap! guess-state assoc :counter 0)
+  (swap! guess-state assoc :guesses {})
+  (add-guess-watch))
+
+(defn increase-guess-counter! []
+  (swap! guess-state update-in [:counter] inc))
+
+(defn update-guess! [guess]
+  (swap! guess-state assoc :guess guess))
+
+(defn get-map-skip-last
+  "Returns a map without the last entry in input map"
+  {:test (fn []
+           (let [m {:1 1 :2 2 :3 3}]
+             (is (= (get-map-skip-last m) {:1 1 :2 2}))))}
+  [map]
+  {:pre [(map? map)]}
+  (zipmap (take (- (count map) 1) (keys map)) (vals map))
+  )
+
+(defn undo-last-guess! []
+  (let [guesses (@guess-state :guesses)
+        counter (@guess-state :counter)]
+    (remove-watch guess-state :guess-watch)
+    (print "I see you are regretful")
+    (swap! guess-state assoc :guesses (get-map-skip-last guesses))
+    (swap! guess-state update-in [:counter] dec)
+    )
+  (add-guess-watch)
+  )
+
+(defn process-input-string
+  {:test (fn []
+           (is (= (process-input-string "4") 4))
+           (is (= (process-input-string "r4") "r"))
+           (is (= (process-input-string "q\n") "q"))
+           )}
+  [str]
+  (let [int-str (re-find #"[0-9]*" str)
+        str-str (re-find #"[a-zA-Z]*" str)]
+    (if (> (count int-str) 0)
+      (Integer/parseInt int-str)
+      str-str
+      )))
+
 (defn -main [& args]
-  (initialize-state)
+  (initialize-state!)
   (println "Guess a number between 1 and 10")
   (print "-> ") (flush)
-  (loop []
-    (swap! guess-state assoc :guess (Integer/parseInt (re-find #"[0-9]*" (read-line))))
-    (swap! guess-state update-in [:counter] inc)
-    (if (= (@guess-state :answer) (@guess-state :guess))
+  (loop [input (process-input-string (read-line))]
+    ;(println "before " @guess-state)
+    (if (string? input)
       (do
-        (println "You guessed" (vals(@guess-state :guesses)))
-        (if (< (@guess-state :counter) 4)
-          (println "You made it in" (@guess-state :counter) "attempts. Bravo!")
-          (println "That is correct!"))
+        ;(println "You entered a character")
+        (if (= input "u")
+          (undo-last-guess!)
+          )
+        (print "\n->")
+        )
+      (do
+        ;(println "You entered a digit")
+        (update-guess! input)
+        (increase-guess-counter!)
+        (if (= (@guess-state :answer) (@guess-state :guess))
+          (do
+            (println "You guessed" (vals (@guess-state :guesses)))
+            (if (< (@guess-state :counter) 4)
+              (println "You made it in" (@guess-state :counter) "attempts. Bravo!")
+              (println "That is correct!"))
+            ))
+        (if (< (@guess-state :guess) (@guess-state :answer)) (print "That is too small!\n-> "))
+        (if (> (@guess-state :guess) (@guess-state :answer)) (print "That is too big!\n-> "))
         ))
-      (if (< (@guess-state :guess) (@guess-state :answer)) (print "That is too small!\n-> "))
-      (if (> (@guess-state :guess) (@guess-state :answer)) (print "That is too big!\n-> "))
-      (flush)
-      (when (not= (@guess-state :guess) (@guess-state :answer))
-        (recur))))
+    (flush)
+    ;(println "after " @guess-state)
+    (when-not (= (@guess-state :guess) (@guess-state :answer))
+      (recur (process-input-string (read-line))))))
 
 
-
+;1 miljon människor känner obehag minst 1 ggn per månad när de tänker på arbetet.
 
 ;------------------------------------
 
@@ -317,18 +452,23 @@
   (clojure.math.numeric-tower/sqrt (* x x))
   )
 
-(defn absolute [x]
+(defn absolute
+  {:test (fn [] (is (= (absolute -42) 42)))}
+  [x]
+  {:pre [(integer? x)]}
   (if (< x 0) (* x -1) x))
 
-(defn square [x]
+(defn square
+  {:test (fn [] (is (= (square 4) 16)))}
+  [x]
   (* x x)
   )
 
-(defn benchmark [func]
-  (loop [x 1]
-    (func x)
-    (when (< x 1000000)
-      (recur (inc x)))))
+#_(defn benchmark [func]
+    (loop [x 1]
+      (func x)
+      (when (< x 1000000)
+        (recur (inc x)))))
 
-(time (benchmark absolute))
-(time (benchmark absolute-sqrt))
+;(time (benchmark absolute))
+;(time (benchmark absolute-sqrt))
