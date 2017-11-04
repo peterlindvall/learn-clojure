@@ -2,7 +2,7 @@
   (:require [clojure.math.numeric-tower :as math]
             [learn-clojure.util :as util]
             [clojure.set :as set]
-            [clojure.test :refer :all]))
+            [ysera.test :refer [is is= is-not]]))
 
 ;Data structures
 (comment
@@ -87,7 +87,7 @@
   ;ToDo Add listener to state changes that saves all previous boards
   )
 
-(def no-value 0)
+(defonce no-value 0)
 
 ;(defn get-board [] (get-in @state-atom [:board]))
 (defn get-board [] (@state-atom :board))
@@ -277,30 +277,30 @@
   )
 
 #_(defn find-valid-move
-  "Returns a collection of of valid moves (boardrow, boardcol, digit)"
-  ;ToDo
-  {:test (fn []
-           (let [board (createMediumBoard)]
-             (is (= (find-valid-move board) [0 4 6]))))}
-  [board]
-  (let [freq-map (frequencies (remove-blanks (flatten board)))
-        sorted-freq-map (into (sorted-map-by (fn [key1 key2]
-                                               (compare [(get freq-map key2) key2]
-                                                        [(get freq-map key1) key1]))) freq-map) ;sort map on values
-        value-list (keys sorted-freq-map)
-        value (first value-list)
-        cell (get-cell board 0)
-        ]
-    (println cell)
-    (loop [pos 0
-           valid-positions []]
-      (if (and (= (nth cell pos) no-value) (is-board-valid? (set-value-in-board board (unchecked-divide-int pos 3) (mod pos 3) value))
-               (when (< pos 8)
-                 (recur (inc pos) (conj valid-positions pos)))
-               (println valid-positions))
-        )
-      [0 4 6]
-      )))
+    "Returns a collection of of valid moves (boardrow, boardcol, digit)"
+    ;ToDo
+    {:test (fn []
+             (let [board (createMediumBoard)]
+               (is (= (find-valid-move board) [0 4 6]))))}
+    [board]
+    (let [freq-map (frequencies (remove-blanks (flatten board)))
+          sorted-freq-map (into (sorted-map-by (fn [key1 key2]
+                                                 (compare [(get freq-map key2) key2]
+                                                          [(get freq-map key1) key1]))) freq-map) ;sort map on values
+          value-list (keys sorted-freq-map)
+          value (first value-list)
+          cell (get-cell board 0)
+          ]
+      (println cell)
+      (loop [pos 0
+             valid-positions []]
+        (if (and (= (nth cell pos) no-value) (is-board-valid? (set-value-in-board board (unchecked-divide-int pos 3) (mod pos 3) value))
+                 (when (< pos 8)
+                   (recur (inc pos) (conj valid-positions pos)))
+                 (println valid-positions))
+          )
+        [0 4 6]
+        )))
 
 ;  (find-valid-move (get-board))
 
@@ -355,25 +355,28 @@
 
 ;-------------------------------------
 ; Guessing game
-(def guess-state (atom {}))
+(defn create-state
+  {:test (fn []
+           (is= (create-state 0 :counter 2 :guesses {:1 5 :2 7})
+                {:answer  0
+                 :counter 2
+                 :guesses {:1 5 :2 7}})
+           (is (= (create-state 5)
+                  {:answer  5
+                   :counter 0
+                   :guesses {}})))}
 
-(defn add-guess-watch []
-  (add-watch guess-state :guess-watch
-             (fn [key atom old-state new-state]
-               (if (not= (old-state :counter) (new-state :counter))
-                 (swap! guess-state assoc-in [:guesses (keyword (str (:counter new-state)))] (new-state :guess))))))
+  [correct-answer & key-vals]
+  (reduce (fn [a [k v]]
+            (assoc a k v))
+          ;initial value of a
+          {:answer  correct-answer
+           :counter 0
+           :guesses {}}
+          ;collection of vs
+          (partition 2 key-vals)))
 
-(defn initialize-state! []
-  (swap! guess-state assoc :answer (+ 1 (rand-int 10)))
-  (swap! guess-state assoc :counter 0)
-  (swap! guess-state assoc :guesses {})
-  (add-guess-watch))
-
-(defn increase-guess-counter! []
-  (swap! guess-state update-in [:counter] inc))
-
-(defn update-guess! [guess]
-  (swap! guess-state assoc :guess guess))
+;(partition 2 [1 2 3 4 5])
 
 (defn get-map-skip-last
   "Returns a map without the last entry in input map"
@@ -385,16 +388,44 @@
   (zipmap (take (- (count map) 1) (keys map)) (vals map))
   )
 
-(defn undo-last-guess! []
-  (let [guesses (@guess-state :guesses)
-        counter (@guess-state :counter)]
-    (remove-watch guess-state :guess-watch)
-    (print "I see you are regretful")
-    (swap! guess-state assoc :guesses (get-map-skip-last guesses))
-    (swap! guess-state update-in [:counter] dec)
-    )
-  (add-guess-watch)
-  )
+
+(defn undo
+  {:test (fn []
+           (is= (undo (create-state 0)) (create-state 0))
+           (is= (-> (create-state 0 :counter 2 :guesses {:1 5 :2 7})
+                    (undo)
+                    (:counter))
+                1)
+           (is= (:guesses (undo (create-state 0 :counter 2 :guesses {:1 5 :2 7})))
+                {:1 5})
+           )}
+  [state]
+  (-> state
+      (update :counter (fn [counter] (max 0 (dec counter))))
+      (update :guesses get-map-skip-last)))
+
+(defn guess
+  {:test (fn []
+           (is= (-> (create-state 0 :counter 2 :guesses {:1 5 :2 7})
+                    (guess 6)
+                    (:counter))
+                3)
+           (is= (-> (create-state 0 :counter 2 :guesses {:1 5 :2 7})
+                    (guess 6)
+                    (:guesses))
+                {:1 5 :2 7 :3 6})
+           )}
+  [state value]
+  (as-> state $
+        (update $ :counter inc)
+        (assoc-in $ [:guesses (keyword (str (:counter $)))] value)))
+
+;------------------
+(def guess-state (atom (create-state (+ 1 (rand-int 10)))))
+
+(defn undo! [] (swap! guess-state undo))
+
+(defn guess! [value] (swap! guess-state guess value))
 
 (defn process-input-string
   {:test (fn []
@@ -407,41 +438,100 @@
         str-str (re-find #"[a-zA-Z]*" str)]
     (if (> (count int-str) 0)
       (Integer/parseInt int-str)
-      str-str
-      )))
+      str-str)))
 
 (defn -main [& args]
-  (initialize-state!)
   (println "Guess a number between 1 and 10")
   (print "-> ") (flush)
   (loop [input (process-input-string (read-line))]
     ;(println "before " @guess-state)
-    (if (string? input)
-      (do
-        ;(println "You entered a character")
-        (if (= input "u")
-          (undo-last-guess!)
-          )
-        (print "\n->")
-        )
-      (do
-        ;(println "You entered a digit")
-        (update-guess! input)
-        (increase-guess-counter!)
-        (if (= (@guess-state :answer) (@guess-state :guess))
-          (do
-            (println "You guessed" (vals (@guess-state :guesses)))
-            (if (< (@guess-state :counter) 4)
-              (println "You made it in" (@guess-state :counter) "attempts. Bravo!")
-              (println "That is correct!"))
-            ))
-        (if (< (@guess-state :guess) (@guess-state :answer)) (print "That is too small!\n-> "))
-        (if (> (@guess-state :guess) (@guess-state :answer)) (print "That is too big!\n-> "))
-        ))
+    (cond (= input "u")
+          (undo!)
+
+          (string? input)
+          (print "\n->")
+
+          :else
+          (do (println "You entered a digit")
+              (guess! input)
+              (cond (= (:answer @guess-state) input)
+                    (do (println "You guessed" (vals (:guesses @guess-state)))
+                        (if (< (:counter @guess-state) 4)
+                          (println "You made it in" (:counter @guess-state) "attempts. Bravo!")
+                          (println "That is correct!")))
+
+                    (< input (:answer @guess-state))
+                    (print "That is too small!\n-> ")
+
+                    (> input (@guess-state :answer))
+                    (print "That is too big!\n-> "))))
     (flush)
-    ;(println "after " @guess-state)
-    (when-not (= (@guess-state :guess) (@guess-state :answer))
+    (when-not (= input (:answer @guess-state))
       (recur (process-input-string (read-line))))))
+
+
+#_(defn add-guess-watch []
+    (add-watch guess-state :guess-watch
+               (fn [key atom old-state new-state]
+                 (if (not= (old-state :counter) (new-state :counter))
+                   (swap! guess-state assoc-in [:guesses (keyword (str (:counter new-state)))] (new-state :guess))))))
+
+#_(defn initialize-state! []
+    (swap! guess-state assoc :answer (+ 1 (rand-int 10)))
+    (swap! guess-state assoc :counter 0)
+    (swap! guess-state assoc :guesses {})
+    (add-guess-watch))
+
+#_(defn increase-guess-counter! []
+    (swap! guess-state update-in [:counter] inc))
+
+#_(defn update-guess! [guess]
+    (swap! guess-state assoc :guess guess))
+
+#_(defn undo-last-guess! []
+    (let [guesses (@guess-state :guesses)
+          counter (@guess-state :counter)]
+      (remove-watch guess-state :guess-watch)
+      (print "I see you are regretful")
+      (swap! guess-state assoc :guesses (get-map-skip-last guesses))
+      (swap! guess-state update-in [:counter] dec)
+      )
+    (add-guess-watch)
+    )
+
+
+#_(defn -main [& args]
+    (initialize-state!)
+    (println "Guess a number between 1 and 10")
+    (print "-> ") (flush)
+    (loop [input (process-input-string (read-line))]
+      ;(println "before " @guess-state)
+      (if (string? input)
+        (do
+          ;(println "You entered a character")
+          (if (= input "u")
+            (undo-last-guess!)
+            )
+          (print "\n->")
+          )
+        (do
+          ;(println "You entered a digit")
+          (update-guess! input)
+          (increase-guess-counter!)
+          (if (= (@guess-state :answer) (@guess-state :guess))
+            (do
+              (println "You guessed" (vals (@guess-state :guesses)))
+              (if (< (@guess-state :counter) 4)
+                (println "You made it in" (@guess-state :counter) "attempts. Bravo!")
+                (println "That is correct!"))
+              ))
+          (if (< (@guess-state :guess) (@guess-state :answer)) (print "That is too small!\n-> "))
+          (if (> (@guess-state :guess) (@guess-state :answer)) (print "That is too big!\n-> "))
+          ))
+      (flush)
+      ;(println "after " @guess-state)
+      (when-not (= (@guess-state :guess) (@guess-state :answer))
+        (recur (process-input-string (read-line))))))
 
 
 ;1 miljon människor känner obehag minst 1 ggn per månad när de tänker på arbetet.
